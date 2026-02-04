@@ -1,0 +1,4 @@
+venv/
+.venv/
+*__pycache__*
+genestack-blazar-reservation-splitter-helm-chart/logs/*

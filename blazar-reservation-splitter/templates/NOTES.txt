@@ -1,0 +1,26 @@
+1. Get the application status by running:
+  kubectl --namespace {{ .Release.Namespace }} get pods -l "app.kubernetes.io/name={{ include "blazar-reservation-splitter.name" . }},app.kubernetes.io/instance={{ .Release.Name }}"
+
+2. View the logs:
+  kubectl --namespace {{ .Release.Namespace }} logs -l "app.kubernetes.io/name={{ include "blazar-reservation-splitter.name" . }},app.kubernetes.io/instance={{ .Release.Name }}" -f
+
+3. Check the service:
+  kubectl --namespace {{ .Release.Namespace }} get svc {{ include "blazar-reservation-splitter.fullname" . }}
+
+4. Verify RabbitMQ connectivity:
+  - Blazar vhost: {{ .Values.rabbitmq.blazar.vhost }}
+  - Ceilometer vhost: {{ .Values.rabbitmq.ceilometer.vhost }}
+  - Queue: {{ .Values.rabbitmq.blazar.queue }}
+
+5. Test with a Blazar lease:
+  blazar lease-create \
+    --reservation resource_type=virtual:instance,vcpus=2,memory_mb=2048,disk_gb=20,amount=1 \
+    --reservation resource_type=virtual:instance,vcpus=4,memory_mb=4096,disk_gb=40,amount=1 \
+    --start-date "$(date -u -d '+1 hour' '+%Y-%m-%d %H:%M')" \
+    --end-date "$(date -u -d '+3 hours' '+%Y-%m-%d %H:%M')" \
+    test-multi-reservation-lease
+
+6. Verify Gnocchi resources:
+  openstack metric resource list --type blazar_virtual_instance_reservation
+
+For more information, visit: https://github.com/rackerlabs/genestack

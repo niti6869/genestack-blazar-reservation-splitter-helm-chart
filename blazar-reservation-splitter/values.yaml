@@ -1,0 +1,164 @@
+# Default values for blazar-reservation-splitter
+replicaCount: 1
+
+image:
+  repository: ghcr.io/rackerlabs/genestack-images/blazar-reservation-splitter
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: false
+  allowPrivilegeEscalation: false
+
+service:
+  enabled: false  # Service not needed - this is a message processor, not an HTTP service
+  type: ClusterIP
+  port: 9090
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+livenessProbe:
+  enabled: true
+  exec:
+    command:
+    - python
+    - -c
+    - "import sys; sys.exit(0)"
+  initialDelaySeconds: 30
+  periodSeconds: 30
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  enabled: true
+  exec:
+    command:
+    - python
+    - -c
+    - "import sys; sys.exit(0)"
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# OpenStack endpoints configuration
+endpoints:
+  oslo_messaging:
+    auth:
+      user: blazar-reservation-splitter
+      password: password
+    statefulset: null
+    hosts:
+      default: rabbitmq-nodes
+    host_fqdn_override:
+      default: rabbitmq.openstack.svc.cluster.local
+    path: /
+    scheme: rabbit
+    port:
+      amqp:
+        default: 5672
+
+# RabbitMQ Configuration
+# The splitter connects to the same RabbitMQ instance used by OpenStack services
+rabbitmq:
+  # OpenStack exchange name
+  exchange: "openstack"
+  # Queue name for this sidecar
+  queue: "blazar_reservation_splitter"
+
+# Events to intercept from Blazar
+targetEvents:
+  - start_lease
+
+# Additional environment variables
+extraEnv: []
+# - name: LOG_LEVEL
+#   value: "DEBUG"
+
+# Additional volumes
+extraVolumes: []
+# - name: config
+#   configMap:
+#     name: my-config
+
+# Additional volume mounts
+extraVolumeMounts: []
+# - name: config
+#   mountPath: /etc/config
+#   readOnly: true
+
+# Pod disruption budget
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
+  # maxUnavailable: 1
+
+# Network policy
+networkPolicy:
+  enabled: false
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress: []
+  egress:
+    - to:
+      - namespaceSelector:
+          matchLabels:
+            name: openstack
+      ports:
+      - protocol: TCP
+        port: 5672
+
+# Monitoring
+monitoring:
+  enabled: false
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+    scrapeTimeout: 10s
+    labels: {}
+    annotations: {}
+

@@ -19,5 +19,5 @@ sources:
   - https://github.com/rackerlabs/genestack-images
 dependencies:
   - name: helm-toolkit
-    repository: file://../helm-toolkit
+    repository: https://tarballs.opendev.org/openstack/openstack-helm-infra
     version: ">= 0.1.0"

@@ -111,7 +111,7 @@ rabbitmq:
 
 # Events to intercept from Blazar
 targetEvents:
-  - start_lease
+  - lease.event.start_lease
 
 # Additional environment variables
 extraEnv: []
